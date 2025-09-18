@@ -2,7 +2,7 @@ set -x
 
 
 # 设置python环境
-env_path="/mnt/public/huangliang45/my_conda_env/vllm"
+env_path="/mnt/public/huangliang45/my_conda_env/dist"
 ray_cmd="$env_path/bin/ray"
 python_cmd="$env_path/bin/python"
 

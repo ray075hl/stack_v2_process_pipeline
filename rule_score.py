@@ -21,7 +21,7 @@ ccqs = ComputeCodeQualitySignal()
 code_filter = CodeFilter()
 
 
-context_key = 'text'
+context_key = 'content'
 
 def estimate_size_from_content_batch(batch, encoding='utf-8'):
     """
@@ -106,10 +106,6 @@ def add_filter_tag_batch(batch):
     batch[['effective','hit_map']] = batch.apply(filter_code, axis=1 ,args=(code_filter,), result_type='expand')
     return batch
 
-def get_filename(row):
-    row['filename'] = row['meta']['file_path']
-    return row
-
 # 定义一个过滤函数
 def filter_unknown_lang_func(row):
     return row['program_lang'] != 'unknown'
@@ -144,9 +140,12 @@ if __name__ == "__main__":
         os.makedirs(saved_path)
     
     # 读取文件
-    filelist = glob.glob(input_path)
+    ori_filelist = glob.glob(input_path)[0:8000]
+    # 过滤空文件
+    filelist = [p for p in ori_filelist if os.path.getsize(p) > 0]
     all_data = ray.data.read_json(filelist)
-
+    all_data = all_data.drop_columns(cols=["detected_licenses"])
+    all_data = all_data.drop_columns(cols=["gha_license_id"])
     # 增加属性
     all_data = all_data.add_column("doc_type", lambda x: 'code')
     all_data = all_data.add_column("lang", lambda x: 'en')
@@ -163,6 +162,6 @@ if __name__ == "__main__":
     all_data = all_data.map_batches(add_filter_tag_batch, batch_format='pandas')
 
     # 根据标识进行过滤
-    all_data_filtered = all_data.filter(lambda row: row["effective"] == 1)  # 只保留可用的数据
-    all_data_filtered.write_parquet(saved_path, partition_cols=["language"])  # 按语言来进行存储 "language" 字段是stack v2 自带的
+    all_data = all_data.filter(lambda row: row["effective"] == "1")  # 只保留可用的数据
+    all_data.write_parquet(saved_path, partition_cols=["language"])  # 按语言来进行存储 "language" 字段是stack v2 自带的
     
