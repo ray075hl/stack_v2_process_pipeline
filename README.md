@@ -2,12 +2,16 @@
 
 1. 首先下载index 
 
+https://huggingface.co/datasets/bigcode/the-stack-v2-dedup
+
 2. 根据index下载源码
+```
 python download_stack_v2_source_code.py --input_path xxx --output_path yyy
-
+```
 3. 过滤问题json + 分割成最大10000行的文件
+```
 python fix_json_data.py --input_path yyy --output_path zzz
-
+```
 4. 规则过滤
 ```
 bash script/setup_ray_env.sh  # 运行前先设置自己的env_path
