@@ -105,10 +105,6 @@ def filter_code(row, code_filter: CodeFilter):
 def add_filter_tag_batch(batch):
     batch[['effective','hit_map']] = batch.apply(filter_code, axis=1 ,args=(code_filter,), result_type='expand')
     return batch
-
-# 定义一个过滤函数
-def filter_unknown_lang_func(row):
-    return row['program_lang'] != 'unknown'
         
 
 if __name__ == "__main__":
@@ -123,8 +119,8 @@ if __name__ == "__main__":
 
     '''
     python rule_score.py \
-        --pattern "/mnt/public/huangliang45/stack-v2-merged/the_stack_v2_dedup_more10stars_code/*.jsonl" \
-        --saved_path /mnt/public/huangliang45/stack-v2-merged/the_stack_v2_dedup_more10stars_code_with_tag
+        --pattern "/mnt/public/datasets/stack-v2-dedup-index-source-code/*.jsonl" \
+        --saved_path xxxxx
     '''
     # 解析入参
     args = parse.parse_args()
@@ -140,7 +136,7 @@ if __name__ == "__main__":
         os.makedirs(saved_path)
     
     # 读取文件
-    ori_filelist = glob.glob(input_path)[0:8000]
+    ori_filelist = glob.glob(input_path)
     # 过滤空文件
     filelist = [p for p in ori_filelist if os.path.getsize(p) > 0]
     all_data = ray.data.read_json(filelist)
@@ -163,5 +159,7 @@ if __name__ == "__main__":
 
     # 根据标识进行过滤
     all_data = all_data.filter(lambda row: row["effective"] == "1")  # 只保留可用的数据
+    # 将content 字段rename 为text 方便后续的处理
+    all_data = all_data.rename_columns({"content": "text"})
     all_data.write_parquet(saved_path, partition_cols=["language"])  # 按语言来进行存储 "language" 字段是stack v2 自带的
     
